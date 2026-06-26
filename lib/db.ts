@@ -1,3 +1,5 @@
+'use server'
+
 import { createClient } from './supabase/server'
 
 // Get merchant data by user ID
