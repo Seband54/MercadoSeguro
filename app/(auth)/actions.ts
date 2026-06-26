@@ -106,6 +106,7 @@ export async function signIn(formData: {
     })
 
     if (error) {
+      console.error('[v0] Login error:', error.message)
       return {
         error: error.message,
       }
@@ -119,8 +120,11 @@ export async function signIn(formData: {
 
     return {
       success: true,
+      message: 'Sesión iniciada correctamente',
+      redirect: '/dashboard',
     }
   } catch (error) {
+    console.error('[v0] Sign in exception:', error)
     if (error instanceof Error) {
       return {
         error: error.message,
