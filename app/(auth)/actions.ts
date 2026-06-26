@@ -15,7 +15,6 @@ export async function signUp(formData: {
   try {
     // Validate input
     const validatedData = registerSchema.parse(formData)
-    console.log('[v0] Starting signup for:', validatedData.email)
 
     const supabase = await createClient()
 
@@ -29,24 +28,20 @@ export async function signUp(formData: {
     })
 
     if (authError) {
-      console.error('[v0] Auth signup error:', authError)
       return {
         error: `Error de autenticación: ${authError.message}`,
       }
     }
 
     if (!authData.user) {
-      console.error('[v0] No user created')
       return {
         error: 'No se pudo crear la cuenta',
       }
     }
 
-    console.log('[v0] Auth user created:', authData.user.id)
-
-    // 2. Create comerciante record using service role
+    // 2. Create comerciante record
     // The database trigger will auto-create the solicitud
-    const { data: comerciante, error: comercianteError } = await supabase
+    const { error: comercianteError } = await supabase
       .from('comerciantes')
       .insert({
         user_id: authData.user.id,
@@ -59,24 +54,31 @@ export async function signUp(formData: {
       })
 
     if (comercianteError) {
-      console.error('[v0] Comerciante creation error:', comercianteError)
-      // Don't fail - the user was created in auth
+      return {
+        error: `Error al crear comerciante: ${comercianteError.message}`,
+      }
+    }
+
+    // 3. Try to auto-login
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: validatedData.email,
+      password: validatedData.password,
+    })
+
+    if (signInError) {
       return {
         success: true,
-        message: 'Cuenta creada. Por favor inicia sesión.',
+        message: 'Registro completado. Por favor inicia sesión.',
         requiresManualLogin: true,
       }
     }
 
-    console.log('[v0] Comerciante created successfully')
-
     return {
       success: true,
-      message: 'Registro completado. Redirigiendo...',
+      message: 'Registro completado. Redirigiendo al dashboard...',
       redirectToDashboard: true,
     }
   } catch (error) {
-    console.error('[v0] Signup error:', error)
     if (error instanceof Error) {
       return {
         error: error.message,
