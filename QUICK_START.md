@@ -1,29 +1,52 @@
 # MercadoSeguro - Quick Start Guide
 
-## Problema: Registro/Login no funcionan
+# ⚠️ PROBLEMA ENCONTRADO: Email Verification Bloqueando Auth
 
-El problema es que **Supabase Auth tiene email verification habilitada por defecto**. Esto impide que los usuarios se registren e inicien sesión inmediatamente.
+## El Problema
+**Supabase Auth tiene email verification habilitada por defecto**. Esto significa:
+- Los usuarios que se registren recibirán un link en email para confirmar
+- Sin confirmar, no pueden iniciar sesión
+- En desarrollo local/MVP, esto no es ideal
 
-## Solución: Desabilitar Email Verification
+## Solución: Desabilitar Email Verification (5 minutos)
 
-### Paso 1: Ir a Supabase Console
+### Paso 1: Abre Supabase Dashboard
+- Ve a https://supabase.com/dashboard
+- Selecciona tu proyecto "mercado-seguro"
 
-1. Abre tu proyecto en [Supabase Console](https://supabase.com/dashboard)
-2. Navega a **Authentication → Providers → Email**
+### Paso 2: Ve a Configuración de Auth
+1. En el menú izquierdo, haz clic en **Authentication**
+2. Luego haz clic en **Providers**
+3. Encuentra **Email** en la lista
 
-### Paso 2: Desabilitar Email Confirmation
+### Paso 3: Desabilita Email Confirmation
+1. Busca el toggle **"Enable email confirmations"**
+2. **Apagalo** (el toggle debe estar en OFF/gris)
+3. Haz clic en **"Save"**
 
-1. En "Confirm email", **apaga el toggle** para desabilitar la verificación de email
-2. Guarda los cambios
+### Listo! Ahora funciona:
+- Los usuarios pueden registrarse en `/register`
+- Inmediatamente se crean: cuenta Auth + comerciante + solicitud
+- Pueden loginearse en `/login` sin verificar email
 
-### Paso 3: Usar la App
+---
 
-Ahora puedes:
-- Ir a `/register` y crear una cuenta
-- La cuenta se registrará inmediatamente en Supabase Auth
-- Se creará automáticamente un comerciante con estado "Pendiente"
-- Se creará automáticamente una solicitud de formalización
-- Luego puedes ir a `/login` e iniciar sesión
+## Verificación: ¿Funciona Ahora?
+
+### Test 1: Crear Cuenta
+1. Ve a http://localhost:3000/register
+2. Rellena el formulario con datos de prueba
+3. Haz clic en "Registrarse"
+4. Debes ser redirigido a `/dashboard` o `/login`
+
+### Test 2: Acceder Dashboard
+1. Ve a http://localhost:3000/login
+2. Inicia sesión con la cuenta que acabas de crear
+3. Debes ver el dashboard con tu estado de formalización (Pendiente)
+
+### Test 3: Ver Catálogo
+1. Ve a http://localhost:3000/catalogo
+2. Debes ver "No hay productos disponibles" (correcto, sin datos aún)
 
 ## Test Workflow
 
