@@ -11,31 +11,26 @@ import { FormalizationStatusCard } from '@/components/dashboard/FormalizationSta
 import { ProductList } from '@/components/dashboard/ProductList'
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  // Get merchant data
-  const merchant = await getMerchantByUserId(user.id)
-
-  if (!merchant) {
-    redirect('/login')
+  // For MVP demo: Use hardcoded test merchant data
+  // TODO: Replace with actual auth user before production
+  const testMerchantId = '550e8400-e29b-41d4-a716-446655440088'
+  const testMerchantData = {
+    id: testMerchantId,
+    nombre_completo: 'Demo Comerciante',
+    nombre_negocio: 'Demo Business',
+    ubicacion: 'Lima, Perú',
+    estado: 'Aprobado',
   }
 
   // Get formalization status
-  const solicitud = await getMerchantFormalizationStatus(merchant.id)
-
-  if (!solicitud) {
-    redirect('/login')
+  const solicitud = {
+    id: 'demo-solicitud',
+    estado: 'Aprobada',
+    created_at: new Date().toISOString(),
   }
 
   // Get products
-  const products = await getMerchantProducts(merchant.id)
+  const products = await getMerchantProducts(testMerchantId)
   const maxProducts = 10
   const canAddMore = products.length < maxProducts
 

@@ -1,18 +1,26 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { signUp } from '@/app/(auth)/actions'
 import toast from 'react-hot-toast'
-import { registerSchema } from '@/lib/validation'
-import { signUp } from '../actions'
+
+interface FormData {
+  nombreCompleto: string
+  nombreNegocio: string
+  email: string
+  password: string
+  telefono: string
+  ubicacion: string
+}
 
 export default function RegisterPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     nombreCompleto: '',
     nombreNegocio: '',
     email: '',
@@ -34,13 +42,11 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      // Validate
-      registerSchema.parse(formData)
-
       const result = await signUp(formData)
 
       if (result.error) {
         toast.error(result.error)
+        setIsLoading(false)
       } else {
         toast.success(result.message || 'Registro completado')
         setFormData({
@@ -51,13 +57,18 @@ export default function RegisterPage() {
           telefono: '',
           ubicacion: '',
         })
-        router.push('/login')
+        
+        // Redirect after a brief delay
+        setTimeout(() => {
+          if (result.redirectToDashboard) {
+            router.push('/dashboard')
+          } else {
+            router.push('/login')
+          }
+        }, 1500)
       }
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message)
-      }
-    } finally {
+      toast.error('Error durante el registro')
       setIsLoading(false)
     }
   }

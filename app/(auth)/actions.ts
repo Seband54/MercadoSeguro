@@ -23,15 +23,13 @@ export async function signUp(formData: {
       email: validatedData.email,
       password: validatedData.password,
       options: {
-        emailRedirectTo:
-          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
-          `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
       },
     })
 
     if (authError) {
       return {
-        error: authError.message,
+        error: `Error de autenticación: ${authError.message}`,
       }
     }
 
@@ -41,10 +39,8 @@ export async function signUp(formData: {
       }
     }
 
-    // 2. Create comerciante record with service role
-    const supabaseServiceRole = createClient()
-    
-    // Use upsert with service role to ensure comerciante is created
+    // 2. Create comerciante record
+    // The database trigger will auto-create the solicitud
     const { error: comercianteError } = await supabase
       .from('comerciantes')
       .insert({
@@ -58,13 +54,29 @@ export async function signUp(formData: {
       })
 
     if (comercianteError) {
-      console.error('Error creating comerciante:', comercianteError)
-      // Don't fail the flow - solicitud will be created by trigger
+      return {
+        error: `Error al crear comerciante: ${comercianteError.message}`,
+      }
+    }
+
+    // 3. Try to auto-login
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: validatedData.email,
+      password: validatedData.password,
+    })
+
+    if (signInError) {
+      return {
+        success: true,
+        message: 'Registro completado. Por favor inicia sesión.',
+        requiresManualLogin: true,
+      }
     }
 
     return {
       success: true,
-      message: 'Registro completado. Por favor, inicia sesión.',
+      message: 'Registro completado. Redirigiendo al dashboard...',
+      redirectToDashboard: true,
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -94,6 +106,7 @@ export async function signIn(formData: {
     })
 
     if (error) {
+      console.error('[v0] Login error:', error.message)
       return {
         error: error.message,
       }
@@ -107,8 +120,11 @@ export async function signIn(formData: {
 
     return {
       success: true,
+      message: 'Sesión iniciada correctamente',
+      redirect: '/dashboard',
     }
   } catch (error) {
+    console.error('[v0] Sign in exception:', error)
     if (error instanceof Error) {
       return {
         error: error.message,
