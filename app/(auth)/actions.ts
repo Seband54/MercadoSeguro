@@ -15,6 +15,7 @@ export async function signUp(formData: {
   try {
     // Validate input
     const validatedData = registerSchema.parse(formData)
+    console.log('[v0] Starting signup for:', validatedData.email)
 
     const supabase = await createClient()
 
@@ -23,29 +24,29 @@ export async function signUp(formData: {
       email: validatedData.email,
       password: validatedData.password,
       options: {
-        emailRedirectTo:
-          process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
-          `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/callback`,
       },
     })
 
     if (authError) {
+      console.error('[v0] Auth signup error:', authError)
       return {
-        error: authError.message,
+        error: `Error de autenticación: ${authError.message}`,
       }
     }
 
     if (!authData.user) {
+      console.error('[v0] No user created')
       return {
         error: 'No se pudo crear la cuenta',
       }
     }
 
-    // 2. Create comerciante record with service role
-    const supabaseServiceRole = createClient()
-    
-    // Use upsert with service role to ensure comerciante is created
-    const { error: comercianteError } = await supabase
+    console.log('[v0] Auth user created:', authData.user.id)
+
+    // 2. Create comerciante record using service role
+    // The database trigger will auto-create the solicitud
+    const { data: comerciante, error: comercianteError } = await supabase
       .from('comerciantes')
       .insert({
         user_id: authData.user.id,
@@ -58,15 +59,24 @@ export async function signUp(formData: {
       })
 
     if (comercianteError) {
-      console.error('Error creating comerciante:', comercianteError)
-      // Don't fail the flow - solicitud will be created by trigger
+      console.error('[v0] Comerciante creation error:', comercianteError)
+      // Don't fail - the user was created in auth
+      return {
+        success: true,
+        message: 'Cuenta creada. Por favor inicia sesión.',
+        requiresManualLogin: true,
+      }
     }
+
+    console.log('[v0] Comerciante created successfully')
 
     return {
       success: true,
-      message: 'Registro completado. Por favor, inicia sesión.',
+      message: 'Registro completado. Redirigiendo...',
+      redirectToDashboard: true,
     }
   } catch (error) {
+    console.error('[v0] Signup error:', error)
     if (error instanceof Error) {
       return {
         error: error.message,

@@ -51,7 +51,15 @@ export default function RegisterPage() {
           telefono: '',
           ubicacion: '',
         })
-        router.push('/login')
+        
+        // Redirect to dashboard if auto-login was successful
+        if (result.redirectToDashboard) {
+          router.push('/dashboard')
+        } else if (result.requiresManualLogin) {
+          router.push('/login')
+        } else {
+          router.push('/login')
+        }
       }
     } catch (error) {
       if (error instanceof Error) {
